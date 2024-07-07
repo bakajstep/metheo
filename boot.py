@@ -1,8 +1,9 @@
 import network
 import time
+import ntptime
 
-ssid = 'Bakaj'
-password = 'uvodojemu1234'
+ssid = 'biometeo'
+password = 'iUDWBDjQJYxx'
 
 
 def connect():
@@ -23,3 +24,5 @@ def connect():
 
 print("Connecting to your wifi...")
 connect()
+
+ntptime.settime()
