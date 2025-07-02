@@ -1,35 +1,31 @@
-import network
-import time
+from lib.wifi import connect_wifi
 import ntptime
+import time
 import machine
 
+def set_time_from_ntp():
+    try:
+        ntptime.settime()
+        print("Time set from NTP.")
+    except Exception as e:
+        print("NTP failed:", e)
 
-ssid = 'biometeo'
-password = 'iUDWBDjQJYxx'
+def set_local_rtc(offset_hours=2):
+    utc_time = time.localtime()
+    time_offset = offset_hours * 60 * 60
+    local_time = time.localtime(time.mktime(utc_time) + time_offset)
+    rtc = machine.RTC()
+    rtc.datetime((
+        local_time[0], local_time[1], local_time[2],
+        local_time[6],
+        local_time[3], local_time[4], local_time[5], 0
+    ))
+    print("RTC set to local time:", rtc.datetime())
 
-
-def connect():
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(ssid, password)
-
-    while not wlan.isconnected() and wlan.status() >= 0:
-        print("Connecting to network...")
-        time.sleep(1)
-
-    if wlan.isconnected():
-        print("Connected to network!")
-        print(wlan.ifconfig())
-    else:
-        print("Failed to connect to network")
-
-
-print("Connecting to your wifi...")
-connect()
-
-ntptime.settime()
-utc_time = time.localtime()
-time_offset = 2 * 60 * 60
-local_time = time.localtime(time.mktime(utc_time) + time_offset)
-rtc = machine.RTC()
-rtc.datetime((local_time[0], local_time[1], local_time[2], local_time[6], local_time[3], local_time[4], local_time[5], 0))
+print("WiFi a čas initialization...")
+wlan = connect_wifi()
+if wlan and wlan.isconnected():
+    set_time_from_ntp()
+    set_local_rtc(offset_hours=2)
+else:
+    print("Boot: WiFi not connected, RTC not set!")

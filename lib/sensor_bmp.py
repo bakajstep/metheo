@@ -1,5 +1,5 @@
 from machine import Pin, I2C
-from bmp280 import *
+from dep.bmp280 import *
 import time
 
 
