@@ -47,19 +47,23 @@ async def status(request):
     }
     return Response(body=ujson.dumps(status_info))
 
+def safe_read(fn, fallback=None):
+    try:
+        return fn()
+    except Exception as e:
+        print(f"Read failed: {fn.__name__} - {e}")
+        return fallback
+
 @app.route('/meteo')
 async def meteo(request):
-    try:
-        return {
-            'temperature_pico': pico.read_temperature(),
-            'temperature_air': bmp.read_temperature(),
-            'temperature_water': ds18.read_temperature(),
-            'pressure': bmp.read_pressure(),
-            'altitude_ibf': bmp.altitude_ibf(),
-            'timestamp': time.localtime()
-        }
-    except Exception as e:
-        return {'error': str(e)}, 500  # status 500, JSON s chybou
+    return {
+        'temperature_pico': safe_read(lambda: pico.read_temperature(), fallback='error'),
+        'temperature_air': safe_read(lambda: bmp.read_temperature(), fallback='error'),
+        'temperature_water': safe_read(lambda: ds18.read_temperature(), fallback='error'),
+        'pressure': safe_read(lambda: bmp.read_pressure(), fallback='error'),
+        'altitude_ibf': safe_read(lambda: bmp.altitude_ibf(), fallback='error'),
+        'timestamp': safe_read(lambda: time.localtime(), fallback='error')
+    }
 
 async def main():
     # Spusť WiFi monitor jako background task

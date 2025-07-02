@@ -11,16 +11,27 @@ def set_time_from_ntp():
         print("NTP failed:", e)
 
 def set_local_rtc(offset_hours=2):
-    utc_time = time.localtime()
-    time_offset = offset_hours * 60 * 60
-    local_time = time.localtime(time.mktime(utc_time) + time_offset)
+    # 1. Získej UTC čas
+    utc_time = time.time()  # sekundy od epochy (v UTC)
+    # 2. Přičti offset (v sekundách)
+    local_epoch = utc_time + (offset_hours * 3600)
+    # 3. Rozbal na pole (MicroPython localtime/UTC stejný výstup)
+    local_time = time.localtime(local_epoch)
+    # 4. Převeď weekday (0=Mon...6=Sun) -> (1=Mon...7=Sun)
+    weekday = local_time[6] + 1
     rtc = machine.RTC()
     rtc.datetime((
-        local_time[0], local_time[1], local_time[2],
-        local_time[6],
-        local_time[3], local_time[4], local_time[5], 0
+        local_time[0],  # year
+        local_time[1],  # month
+        local_time[2],  # day
+        weekday,
+        local_time[3],  # hour
+        local_time[4],  # minute
+        local_time[5],  # second
+        0               # subsecond
     ))
-    print("RTC set to local time:", rtc.datetime())
+    print("local_time", local_time)
+    print("rtc.datetime:", rtc.datetime())
 
 print("WiFi a čas initialization...")
 wlan = connect_wifi()
